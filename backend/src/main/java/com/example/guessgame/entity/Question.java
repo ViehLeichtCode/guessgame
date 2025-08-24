@@ -1,4 +1,4 @@
-package com.example.guessgame;
+package com.example.guessgame.entity;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
