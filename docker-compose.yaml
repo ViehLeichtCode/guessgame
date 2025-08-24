@@ -1,0 +1,7 @@
+services:
+  database:
+    image: postgres:latest
+    restart: always
+    shm_size: 128mb
+    environment:
+      POSTGRES_PASSWORD: safepassword
