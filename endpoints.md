@@ -11,6 +11,7 @@ Eine Antwort könnte so aussehen:
 {
     "question": "Example",
     "id": 12345,
+    "active_player": 312,
     "answers": [
       {
         "text": "Antwort 1",
@@ -28,16 +29,24 @@ Eine Antwort könnte so aussehen:
 }
 ```
 
-## Welcher Spieler soll gerade die Frage für sich selbst beantworten?
+## Welche Spieler nehmen teil?
 
-Darauf müssen alle Spieler zugreifen können. Gibt den Namen des aktuellen Spielers zurück
+Welche Spieler sind bereits im Spiel, wenn der User beitritt? Weitere Beitritte werden via SSE mitgeteilt
 
-z.B.:
+`GET /players`
 
 ```json
 {
-    "name": "Spieler 1",
-    "myTurn": false
+  "players": [
+    {
+      "name": "Spieler 1",
+      "id": 312
+    },
+    {
+      "name": "Spieler 2",
+      "id": 535
+    }
+  ]
 }
 ```
 
@@ -47,6 +56,7 @@ Jeder muss auf seine Frage eine Antwort übermitteln können
 
 Die Anfrage wäre dann ein POST mit
 
+`POST /current-question/answer`
 ```json
 {
   "question_id": 12345,
@@ -58,33 +68,36 @@ Die Anfrage wäre dann ein POST mit
 
 Wer hat welche Antwort gegeben und welche Antwort war die richtige?
 
+`GET /current-question/results`
 ```json
 {
-  "active_player": "Spieler 1",
-  "given_answer": "Antwort 1",
-  "other_answers": [
+  "active_player": 134233,
+  "given_answer": 5324534,
+  "results": [
     {
-      "name": "Spieler 2",
-      "answer": "Antwort 2",
-      "correct": false
+      "answer_id": 423,
+      "player_id": 54423,
+      "correct": false,
+      "reward": 0
     },
     {
-      "name": "Spieler 3",
-      "answer": "Antwort 1",
-      "correct": true
+      "answer_id": 53,
+      "player_id": 6445,
+      "correct": true,
+      "reward": 50
     }
   ],
   "scores": [
     {
-      "name": "Spieler 2",
+      "player_id": 6445,
       "score": 450
     },
     {
-      "name": "Spieler 1",
+      "player_id": 563,
       "score": 150
     },
     {
-      "name": "Spieler 3",
+      "player_id": 4235234,
       "score": 950
     }
   ]
@@ -94,6 +107,7 @@ Wer hat welche Antwort gegeben und welche Antwort war die richtige?
 ## Zur nächsten Frage gehen
 
 Auch hier ein POST Request ohne Payload
+`POST /current-question/next`
 
 ##  Ein Spiel erstellen
 
@@ -102,6 +116,7 @@ Als Antwort wird die Spiel ID zurückgegeben die andere Spieler eingeben müssen
 
 Im Request soll eine Optionale Liste von Kategorien übergeben werden können
 
+`POST /create-game`
 ```json
 {
   "categories": [
@@ -122,11 +137,26 @@ Im Request soll eine Optionale Liste von Kategorien übergeben werden können
 
 Mit einem POST Request soll man dem Spiel beitreten können. Die ID kommt aus der Route
 
+Ein Request würde so aussehen:
+`POST /join-game/12345`
+```json
+{
+  "player_name": "Spieler 1"
+}
+```
+Die Antwort sollte so aussehen:
+```json
+{
+  "player_id": 12345676
+}
+```
+
 ## Welche Kategorien von Fragen gibt es?
 
 Ein Get Request liefert eine Liste von allen Fragen Kategorien die es gibt
 
 z.B.:
+`GET /categories`
 ```json
 {
   "categories": [
@@ -150,16 +180,6 @@ z.B.:
 }
 ```
 
-# Vorgeschlagene Endpunkte
+## Spiel beenden
 
-```text
-/categories GET
-/create-game POST
-/join-game/:id POST
-/current-question GET
-/current-question/active-player GET
-/current-question/answer POST
-/current-question/results GET
-/current-question/next POST
-/end-game POST 
-```
+`POST /end-game`
