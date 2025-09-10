@@ -1,3 +1,5 @@
+version: "3.9"
+
 services:
   database:
     image: postgres:latest
@@ -8,3 +10,63 @@ services:
       POSTGRES_DB: guessgame
     ports:
       - "5432:5432"
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d guessgame"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: spring-backend
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://database:5432/guessgame
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=safepassword
+    networks:
+      - app-network
+    depends_on:
+      database:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: nuxt-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NUXT_PUBLIC_API_BASE=http://backend:8080
+    networks:
+      - app-network
+    depends_on:
+      backend:
+        condition: service_healthy
+
+  wiremock:
+    image: wiremock/wiremock:latest
+    container_name: wiremock
+    ports:
+      - "8081:8080"
+    networks:
+      - app-network
+    volumes:
+      - ./wiremock:/home/wiremock  # Falls du Stubs/Configs lokal ablegen willst
+    command: ["--verbose"]
+
+networks:
+  app-network:
+    driver: bridge
